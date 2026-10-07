@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!prefersReducedMotion && typeof Lenis !== 'undefined') {
     try {
       lenis = new Lenis({
-        duration: 0.85,
+        duration: 0.7,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -8 * t)),
         smoothWheel: true,
-        touchMultiplier: 1.2,
+        touchMultiplier: 1.1,
         infinite: false,
       });
 
-      // Synchronize Lenis with GSAP ScrollTrigger single RAF ticker
+      // Synchronize Lenis with GSAP ScrollTrigger ticker if present
       if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
         lenis.on('scroll', ScrollTrigger.update);
         gsap.ticker.add((time) => {
@@ -42,154 +42,173 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     2. Custom Playful Cursor (Desktop Only - GPU Accelerated & Zero Jitter)
-     ------------------------------------------------------------------------ */
-  const cursor = document.querySelector('.custom-cursor');
-  const cursorFollower = document.querySelector('.custom-cursor-follower');
-
-  if (cursor && cursorFollower && !prefersReducedMotion && window.innerWidth > 992) {
-    let mouseX = -100;
-    let mouseY = -100;
-    let followerX = -100;
-    let followerY = -100;
-    let isVisible = false;
-
-    window.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (!isVisible) {
-        isVisible = true;
-        followerX = mouseX;
-        followerY = mouseY;
-      }
-      cursor.style.transform = `translate3d(${mouseX - 10}px, ${mouseY - 10}px, 0)`;
-    }, { passive: true });
-
-    function renderCursor() {
-      if (isVisible) {
-        followerX += (mouseX - followerX) * 0.22;
-        followerY += (mouseY - followerY) * 0.22;
-        cursorFollower.style.transform = `translate3d(${followerX - 20}px, ${followerY - 20}px, 0)`;
-      }
-      requestAnimationFrame(renderCursor);
-    }
-    requestAnimationFrame(renderCursor);
-
-    // Hover effects on interactive elements
-    const interactiveElements = document.querySelectorAll(
-      'a, button, input, select, textarea, .gallery-item, .activity-card, .feature-card, .pricing-card, .package-card, .social-btn'
-    );
-    interactiveElements.forEach((el) => {
-      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'), { passive: true });
-      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'), { passive: true });
-    });
-  }
-
-  /* ------------------------------------------------------------------------
-     3. Scroll Progress Track & Kart Indicator
+     2. Scroll Progress Track & Sticky Header Class
      ------------------------------------------------------------------------ */
   const progressBar = document.querySelector('.scroll-progress-bar');
   const backToTopBtn = document.getElementById('backToTop');
   const header = document.querySelector('header');
 
+  let scrollProgressRAF = null;
   window.addEventListener('scroll', () => {
-    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (scrollHeight > 0 && progressBar) {
-      const progress = Math.min(100, Math.max(0, (window.scrollY / scrollHeight) * 100));
-      progressBar.style.width = `${progress}%`;
-    }
+    if (!scrollProgressRAF) {
+      scrollProgressRAF = requestAnimationFrame(() => {
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (scrollHeight > 0 && progressBar) {
+          const progress = Math.min(100, Math.max(0, (window.scrollY / scrollHeight) * 100));
+          progressBar.style.width = `${progress}%`;
+        }
 
-    // Sticky Header Class
-    if (header) {
-      if (window.scrollY > 40) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    }
+        // Sticky Header Class (zero layout shift)
+        if (header) {
+          if (window.scrollY > 30) {
+            header.classList.add('scrolled');
+          } else {
+            header.classList.remove('scrolled');
+          }
+        }
 
-    // Back to top button visibility
-    if (backToTopBtn) {
-      if (window.scrollY > 350) {
-        backToTopBtn.classList.add('is-visible');
-      } else {
-        backToTopBtn.classList.remove('is-visible');
-      }
+        // Back to top button visibility
+        if (backToTopBtn) {
+          if (window.scrollY > 350) {
+            backToTopBtn.classList.add('is-visible');
+          } else {
+            backToTopBtn.classList.remove('is-visible');
+          }
+        }
+
+        scrollProgressRAF = null;
+      });
     }
   }, { passive: true });
 
   if (backToTopBtn) {
-    backToTopBtn.addEventListener('click', () => {
-      if (lenis) {
-        lenis.scrollTo(0, { duration: 1.0 });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    backToTopBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      scrollToTarget('#top');
     });
   }
 
   /* ------------------------------------------------------------------------
-     4. Smooth Navigation Links & Active ScrollSpy
+     3. Ultra-Smooth Top Navigation Links & Active ScrollSpy
      ------------------------------------------------------------------------ */
+  const desktopNavLinks = document.querySelectorAll('nav.desktop-nav a[href^="#"]');
+  const spySections = document.querySelectorAll('section[id], footer[id]');
+  let isProgrammaticScrolling = false;
+  let programmaticTimer = null;
+
+  function scrollToTarget(targetId) {
+    if (!targetId || targetId === '#') return;
+
+    isProgrammaticScrolling = true;
+    clearTimeout(programmaticTimer);
+
+    // Instant active button highlighting
+    desktopNavLinks.forEach((link) => {
+      if (link.getAttribute('href') === targetId) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    if (targetId === '#top') {
+      if (lenis) {
+        lenis.scrollTo(0, {
+          duration: 0.7,
+          onComplete: () => {
+            isProgrammaticScrolling = false;
+          }
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      programmaticTimer = setTimeout(() => {
+        isProgrammaticScrolling = false;
+      }, 750);
+      return;
+    }
+
+    const targetEl = document.querySelector(targetId);
+    if (targetEl) {
+      const headerOffset = 68;
+      const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = Math.max(0, elementPosition - headerOffset);
+
+      if (lenis) {
+        lenis.scrollTo(offsetPosition, {
+          duration: 0.75,
+          onComplete: () => {
+            isProgrammaticScrolling = false;
+          }
+        });
+      } else {
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+
+      programmaticTimer = setTimeout(() => {
+        isProgrammaticScrolling = false;
+      }, 800);
+    } else {
+      isProgrammaticScrolling = false;
+    }
+  }
+
+  // Bind smooth click to all anchor links
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
       const targetId = this.getAttribute('href');
-      if (targetId === '#') return;
-
-      if (targetId === '#top') {
+      if (targetId && targetId !== '#') {
         e.preventDefault();
-        if (lenis) lenis.scrollTo(0);
-        else window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      const targetEl = document.querySelector(targetId);
-      if (targetEl) {
-        e.preventDefault();
-        const headerOffset = 75;
-        const elementPosition = targetEl.getBoundingClientRect().top + window.scrollY;
-        const offsetPosition = elementPosition - headerOffset;
-
-        if (lenis) {
-          lenis.scrollTo(offsetPosition, { duration: 0.9 });
-        } else {
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth',
-          });
-        }
+        scrollToTarget(targetId);
       }
     });
   });
 
-  // Active Nav ScrollSpy
-  const navLinks = document.querySelectorAll('nav.desktop-nav a[href^="#"]');
-  const spySections = document.querySelectorAll('section[id], footer[id]');
+  // RAF-Throttled Active Nav ScrollSpy
+  let scrollSpyRAF = null;
+  function updateScrollSpy() {
+    if (isProgrammaticScrolling) return;
 
-  window.addEventListener('scroll', () => {
+    const scrollPos = window.scrollY;
     let currentId = '';
-    spySections.forEach((section) => {
-      const sectionTop = section.offsetTop - 120;
-      const sectionHeight = section.offsetHeight;
-      if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
-        currentId = '#' + section.getAttribute('id');
-      }
-    });
 
-    if (window.scrollY < 200) {
+    if (scrollPos < 180) {
       currentId = '#top';
+    } else {
+      spySections.forEach((section) => {
+        const sectionTop = section.offsetTop - 120;
+        const sectionHeight = section.offsetHeight;
+        if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+          currentId = '#' + section.getAttribute('id');
+        }
+      });
     }
 
-    navLinks.forEach((link) => {
-      link.classList.remove('active');
-      if (link.getAttribute('href') === currentId) {
-        link.classList.add('active');
-      }
-    });
+    if (currentId) {
+      desktopNavLinks.forEach((link) => {
+        if (link.getAttribute('href') === currentId) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!scrollSpyRAF) {
+      scrollSpyRAF = requestAnimationFrame(() => {
+        updateScrollSpy();
+        scrollSpyRAF = null;
+      });
+    }
   }, { passive: true });
 
   /* ------------------------------------------------------------------------
-     5. Mobile Navigation Toggle Drawer & Controls
+     4. Mobile Navigation Toggle Drawer & Controls
      ------------------------------------------------------------------------ */
   const menuBtn = document.getElementById('menuBtn');
   const mobileNavDrawer = document.getElementById('mobileNavDrawer');
@@ -228,7 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     mobileNavLinks.forEach((link) => {
-      link.addEventListener('click', closeDrawer);
+      link.addEventListener('click', () => {
+        closeDrawer();
+        const targetHref = link.getAttribute('href');
+        if (targetHref && targetHref.startsWith('#')) {
+          scrollToTarget(targetHref);
+        }
+      });
     });
 
     mobileNavDrawer.addEventListener('click', (e) => {
@@ -729,14 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bookingTypeSelect.value = packageType;
       calculateLivePrice();
     }
-    const bookingSection = document.getElementById('booking');
-    if (bookingSection) {
-      if (lenis) {
-        lenis.scrollTo(bookingSection, { offset: -60, duration: 1.0 });
-      } else {
-        bookingSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    scrollToTarget('#booking');
   };
 
   /* ------------------------------------------------------------------------
