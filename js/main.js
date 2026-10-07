@@ -1,7 +1,7 @@
 /**
  * PLAY-ON KIDS PLAYGROUND - INTERACTIVE SCRIPTS & GSAP ANIMATIONS
  * Mombasa Mall, 2nd Floor, Mwembe Tayari, Mombasa, Kenya
- * Fully optimized, smooth scrolling, GSAP ScrollTrigger, Lenis & Confetti
+ * Fully optimized, smooth, zero-jitter, mobile-ready & high-performance
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,16 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ------------------------------------------------------------------------
-     1. Lenis Smooth Scrolling Setup & GSAP Sync
+     1. Lightweight Smooth Scrolling Setup (Lenis)
      ------------------------------------------------------------------------ */
   let lenis = null;
   if (!prefersReducedMotion && typeof Lenis !== 'undefined') {
     try {
       lenis = new Lenis({
-        duration: 1.1,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        duration: 0.85,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -8 * t)),
         smoothWheel: true,
-        touchMultiplier: 1.3,
+        touchMultiplier: 1.2,
         infinite: false,
       });
 
@@ -42,45 +42,51 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     2. Custom Playful Cursor & Follower (Desktop Only)
+     2. Custom Playful Cursor (Desktop Only - GPU Accelerated & Zero Jitter)
      ------------------------------------------------------------------------ */
   const cursor = document.querySelector('.custom-cursor');
   const cursorFollower = document.querySelector('.custom-cursor-follower');
 
   if (cursor && cursorFollower && !prefersReducedMotion && window.innerWidth > 992) {
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let followerX = mouseX;
-    let followerY = mouseY;
+    let mouseX = -100;
+    let mouseY = -100;
+    let followerX = -100;
+    let followerY = -100;
+    let isVisible = false;
 
     window.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      cursor.style.left = `${mouseX}px`;
-      cursor.style.top = `${mouseY}px`;
-    });
+      if (!isVisible) {
+        isVisible = true;
+        followerX = mouseX;
+        followerY = mouseY;
+      }
+      cursor.style.transform = `translate3d(${mouseX - 10}px, ${mouseY - 10}px, 0)`;
+    }, { passive: true });
 
-    function updateFollower() {
-      followerX += (mouseX - followerX) * 0.18;
-      followerY += (mouseY - followerY) * 0.18;
-      cursorFollower.style.left = `${followerX}px`;
-      cursorFollower.style.top = `${followerY}px`;
-      requestAnimationFrame(updateFollower);
+    function renderCursor() {
+      if (isVisible) {
+        followerX += (mouseX - followerX) * 0.22;
+        followerY += (mouseY - followerY) * 0.22;
+        cursorFollower.style.transform = `translate3d(${followerX - 20}px, ${followerY - 20}px, 0)`;
+      }
+      requestAnimationFrame(renderCursor);
     }
-    requestAnimationFrame(updateFollower);
+    requestAnimationFrame(renderCursor);
 
     // Hover effects on interactive elements
     const interactiveElements = document.querySelectorAll(
       'a, button, input, select, textarea, .gallery-item, .activity-card, .feature-card, .pricing-card, .package-card, .social-btn'
     );
     interactiveElements.forEach((el) => {
-      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
-      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'), { passive: true });
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'), { passive: true });
     });
   }
 
   /* ------------------------------------------------------------------------
-     3. Scroll Progress Track & Bouncing Go-Kart
+     3. Scroll Progress Track & Kart Indicator
      ------------------------------------------------------------------------ */
   const progressBar = document.querySelector('.scroll-progress-bar');
   const backToTopBtn = document.getElementById('backToTop');
@@ -110,12 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
         backToTopBtn.classList.remove('is-visible');
       }
     }
-  });
+  }, { passive: true });
 
   if (backToTopBtn) {
     backToTopBtn.addEventListener('click', () => {
       if (lenis) {
-        lenis.scrollTo(0, { duration: 1.2 });
+        lenis.scrollTo(0, { duration: 1.0 });
       } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -123,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     4. Smooth Navigation Links (Anchor Scrolling) & Active ScrollSpy
+     4. Smooth Navigation Links & Active ScrollSpy
      ------------------------------------------------------------------------ */
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
@@ -145,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const offsetPosition = elementPosition - headerOffset;
 
         if (lenis) {
-          lenis.scrollTo(offsetPosition, { duration: 1.0 });
+          lenis.scrollTo(offsetPosition, { duration: 0.9 });
         } else {
           window.scrollTo({
             top: offsetPosition,
@@ -180,10 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
         link.classList.add('active');
       }
     });
-  });
+  }, { passive: true });
 
   /* ------------------------------------------------------------------------
-     5. Mobile Navigation Toggle Drawer & Gestures
+     5. Mobile Navigation Toggle Drawer & Controls
      ------------------------------------------------------------------------ */
   const menuBtn = document.getElementById('menuBtn');
   const mobileNavDrawer = document.getElementById('mobileNavDrawer');
@@ -225,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
       link.addEventListener('click', closeDrawer);
     });
 
-    // Close when tapping outside links on drawer background
     mobileNavDrawer.addEventListener('click', (e) => {
       if (e.target === mobileNavDrawer) {
         closeDrawer();
@@ -234,14 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     6. GSAP Animations & ScrollTrigger Reveals
+     6. GSAP Entrance Animations & ScrollTrigger Reveals (Stable & Smooth)
      ------------------------------------------------------------------------ */
   if (typeof gsap !== 'undefined') {
     if (typeof ScrollTrigger !== 'undefined') {
       gsap.registerPlugin(ScrollTrigger);
     }
 
-    // Hero Letter Split
+    // Hero Letter Split Entrance (clean entrance without endless letter vibration)
     const heroTitle = document.querySelector('.hero-title');
     if (heroTitle) {
       const text = heroTitle.textContent.trim();
@@ -254,30 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!prefersReducedMotion) {
-        // Pop in letters with elastic bounce
+        // Pop in letters with elastic bounce, then keep stable and crisp
         gsap.from('.hero-title .char', {
-          y: 60,
+          y: 50,
           opacity: 0,
-          scale: 0.3,
-          rotation: () => gsap.utils.random(-20, 20),
-          stagger: 0.04,
-          duration: 1.0,
-          ease: 'elastic.out(1.2, 0.45)',
-          clearProps: 'opacity,transform',
-          onComplete: () => {
-            // Gentle continuous floating loop
-            gsap.to('.hero-title .char', {
-              y: -6,
-              duration: 1.8,
-              repeat: -1,
-              yoyo: true,
-              ease: 'sine.inOut',
-              stagger: {
-                each: 0.08,
-                from: 'random',
-              },
-            });
-          },
+          scale: 0.4,
+          stagger: 0.035,
+          duration: 0.9,
+          ease: 'back.out(1.8)',
+          clearProps: 'all',
         });
 
         // Hero Tagline Word Split
@@ -293,42 +283,42 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           gsap.from('.hero-tagline .word', {
-            y: 20,
+            y: 18,
             opacity: 0,
-            scale: 0.9,
-            stagger: 0.07,
-            duration: 0.75,
-            delay: 0.6,
+            scale: 0.95,
+            stagger: 0.06,
+            duration: 0.7,
+            delay: 0.5,
             ease: 'power3.out',
-            clearProps: 'opacity,transform',
+            clearProps: 'all',
           });
         }
 
         // Hero CTAs & Stat Pills
         gsap.from('.hero-ctas .btn', {
-          scale: 0.6,
+          scale: 0.75,
           opacity: 0,
-          y: 25,
-          stagger: 0.12,
-          duration: 0.8,
-          delay: 0.9,
-          ease: 'back.out(1.8)',
-          clearProps: 'opacity,transform',
+          y: 20,
+          stagger: 0.1,
+          duration: 0.75,
+          delay: 0.8,
+          ease: 'back.out(1.6)',
+          clearProps: 'all',
         });
 
         gsap.from('.hero-stat-pill', {
-          y: 35,
+          y: 30,
           opacity: 0,
-          stagger: 0.1,
-          duration: 0.75,
-          delay: 1.1,
+          stagger: 0.08,
+          duration: 0.7,
+          delay: 1.0,
           ease: 'power3.out',
-          clearProps: 'opacity,transform',
+          clearProps: 'all',
         });
       }
     }
 
-    // ScrollTrigger Safe Reveal Animations
+    // ScrollTrigger Reveals
     if (!prefersReducedMotion && typeof ScrollTrigger !== 'undefined') {
       // Section Headers
       document.querySelectorAll('.section-header').forEach((header) => {
@@ -338,12 +328,12 @@ document.addEventListener('DOMContentLoaded', () => {
             start: 'top 88%',
             once: true,
           },
-          y: 30,
+          y: 28,
           opacity: 0,
-          stagger: 0.12,
-          duration: 0.7,
-          ease: 'back.out(1.4)',
-          clearProps: 'opacity,transform',
+          stagger: 0.1,
+          duration: 0.65,
+          ease: 'power3.out',
+          clearProps: 'all',
         });
       });
 
@@ -354,13 +344,13 @@ document.addEventListener('DOMContentLoaded', () => {
           start: 'top 85%',
           once: true,
         },
-        y: 40,
+        y: 35,
         opacity: 0,
-        scale: 0.94,
-        stagger: 0.1,
-        duration: 0.7,
-        ease: 'back.out(1.5)',
-        clearProps: 'opacity,transform',
+        scale: 0.96,
+        stagger: 0.08,
+        duration: 0.65,
+        ease: 'power3.out',
+        clearProps: 'all',
       });
 
       // Activity Cards Stagger
@@ -370,13 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
           start: 'top 85%',
           once: true,
         },
-        y: 45,
+        y: 40,
         opacity: 0,
-        scale: 0.95,
-        stagger: 0.08,
-        duration: 0.65,
+        scale: 0.96,
+        stagger: 0.07,
+        duration: 0.6,
         ease: 'power3.out',
-        clearProps: 'opacity,transform',
+        clearProps: 'all',
       });
 
       // Pricing Cards Flip In & Trigger Counter
@@ -387,12 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
           once: true,
           onEnter: animatePricingCounters,
         },
-        y: 45,
+        y: 40,
         opacity: 0,
-        stagger: 0.15,
-        duration: 0.8,
-        ease: 'back.out(1.4)',
-        clearProps: 'opacity,transform',
+        stagger: 0.12,
+        duration: 0.7,
+        ease: 'power3.out',
+        clearProps: 'all',
       });
 
       // Package Cards Stagger
@@ -402,12 +392,12 @@ document.addEventListener('DOMContentLoaded', () => {
           start: 'top 85%',
           once: true,
         },
-        y: 40,
+        y: 35,
         opacity: 0,
-        stagger: 0.12,
-        duration: 0.75,
-        ease: 'back.out(1.5)',
-        clearProps: 'opacity,transform',
+        stagger: 0.1,
+        duration: 0.65,
+        ease: 'power3.out',
+        clearProps: 'all',
       });
 
       // Gallery Items Stagger
@@ -417,13 +407,13 @@ document.addEventListener('DOMContentLoaded', () => {
           start: 'top 88%',
           once: true,
         },
-        y: 35,
+        y: 30,
         opacity: 0,
-        scale: 0.92,
-        stagger: 0.07,
-        duration: 0.65,
+        scale: 0.94,
+        stagger: 0.06,
+        duration: 0.6,
         ease: 'power2.out',
-        clearProps: 'opacity,transform',
+        clearProps: 'all',
       });
 
       // Video Section Cards
@@ -433,37 +423,21 @@ document.addEventListener('DOMContentLoaded', () => {
           start: 'top 85%',
           once: true,
         },
-        y: 40,
+        y: 35,
         opacity: 0,
-        stagger: 0.15,
-        duration: 0.75,
+        stagger: 0.12,
+        duration: 0.7,
         ease: 'power3.out',
-        clearProps: 'opacity,transform',
-      });
-
-      // Parallax on Floating Balloons
-      document.querySelectorAll('.balloon').forEach((balloon, i) => {
-        gsap.to(balloon, {
-          scrollTrigger: {
-            trigger: 'body',
-            start: 'top top',
-            end: 'bottom bottom',
-            scrub: 1.2,
-          },
-          y: (i % 2 === 0 ? -120 : 120),
-          rotation: (i % 2 === 0 ? 15 : -15),
-          ease: 'none',
-        });
+        clearProps: 'all',
       });
     } else {
-      // If motion reduced or ScrollTrigger unavailable, trigger counters immediately
       animatePricingCounters();
     }
   } else {
     animatePricingCounters();
   }
 
-  // Refresh ScrollTrigger after all assets and fonts finish loading
+  // Refresh ScrollTrigger after fonts/assets load
   window.addEventListener('load', () => {
     if (typeof ScrollTrigger !== 'undefined') {
       ScrollTrigger.refresh();
@@ -484,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!target) return;
 
       let current = 0;
-      const step = Math.ceil(target / 30);
+      const step = Math.ceil(target / 25);
       const timer = setInterval(() => {
         current += step;
         if (current >= target) {
@@ -620,31 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ------------------------------------------------------------------------
-     10. 3D Tilt Effect on Cards (Desktop Only)
-     ------------------------------------------------------------------------ */
-  if (!prefersReducedMotion && window.innerWidth > 992) {
-    const tiltCards = document.querySelectorAll('.activity-card, .feature-card, .pricing-card, .package-card');
-    tiltCards.forEach((card) => {
-      card.addEventListener('mousemove', (e) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = ((y - centerY) / centerY) * -6;
-        const rotateY = ((x - centerX) / centerX) * 6;
-
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
-      });
-
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = '';
-      });
-    });
-  }
-
-  /* ------------------------------------------------------------------------
-     11. Interactive Booking Engine & Dynamic Live Calculator
+     10. Interactive Booking Engine & Dynamic Live Calculator
      ------------------------------------------------------------------------ */
   const bookingDateInput = document.getElementById('bookingDate');
   const bookingSessionSelect = document.getElementById('bookingSession');
@@ -782,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookingSection = document.getElementById('booking');
     if (bookingSection) {
       if (lenis) {
-        lenis.scrollTo(bookingSection, { offset: -60, duration: 1.2 });
+        lenis.scrollTo(bookingSection, { offset: -60, duration: 1.0 });
       } else {
         bookingSection.scrollIntoView({ behavior: 'smooth' });
       }
@@ -790,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ------------------------------------------------------------------------
-     12. Booking Form Submit & Multi-Burst Confetti Celebration
+     11. Booking Form Submit & Confetti Celebration
      ------------------------------------------------------------------------ */
   const bookingForm = document.getElementById('bookingForm');
   const confirmationModal = document.getElementById('confirmationModal');
@@ -815,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Confetti Blast
       if (typeof confetti !== 'undefined') {
-        const count = 220;
+        const count = 200;
         const defaults = {
           origin: { y: 0.65 },
           colors: ['#00A651', '#FFD400', '#4FB3BF', '#FF6B35', '#FF3366', '#7B2CBF'],
@@ -888,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     13. Interactive Gallery Lightbox
+     12. Interactive Gallery Lightbox
      ------------------------------------------------------------------------ */
   const lightboxModal = document.getElementById('lightboxModal');
   const lightboxImg = document.getElementById('lightboxImg');
@@ -922,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     14. Testimonials Carousel Slider
+     13. Testimonials Carousel Slider
      ------------------------------------------------------------------------ */
   const testimonialsTrack = document.querySelector('.testimonials-track');
   const prevTestimonialBtn = document.getElementById('prevTestimonial');
@@ -972,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     15. Newsletter Signup Celebration
+     14. Newsletter Signup Celebration
      ------------------------------------------------------------------------ */
   const newsletterForm = document.querySelector('.footer-newsletter-form');
   if (newsletterForm) {
