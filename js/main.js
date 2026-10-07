@@ -890,7 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ------------------------------------------------------------------------
-     13. Testimonials Carousel Slider
+     13. Testimonials Carousel Slider with Touch Swipe Support
      ------------------------------------------------------------------------ */
   const testimonialsTrack = document.querySelector('.testimonials-track');
   const prevTestimonialBtn = document.getElementById('prevTestimonial');
@@ -903,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateSlider() {
       if (!cards.length) return;
-      const cardWidth = cards[0].offsetWidth + 32; // width + gap
+      const cardWidth = cards[0].offsetWidth + (window.innerWidth < 768 ? 16 : 32);
       testimonialsTrack.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
     }
 
@@ -930,6 +930,23 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSlider();
       });
     }
+
+    // Mobile Touch Swipe
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    testimonialsTrack.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    testimonialsTrack.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 40) {
+        if (nextTestimonialBtn) nextTestimonialBtn.click();
+      } else if (touchEndX > touchStartX + 40) {
+        if (prevTestimonialBtn) prevTestimonialBtn.click();
+      }
+    }, { passive: true });
 
     // Auto-advance slider every 6 seconds
     setInterval(() => {
