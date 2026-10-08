@@ -764,22 +764,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmationModal = document.getElementById('confirmationModal');
   const modalSummary = document.getElementById('modalSummary');
   const modalWhatsappBtn = document.getElementById('modalWhatsappBtn');
+  const modalGmailBtn = document.getElementById('modalGmailBtn');
+  const modalEmailBtn = document.getElementById('modalEmailBtn');
   const modalCloseBtn = document.getElementById('modalCloseBtn');
 
   if (bookingForm) {
     bookingForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const name = document.getElementById('parentName').value;
-      const phone = document.getElementById('parentPhone').value;
-      const email = document.getElementById('parentEmail').value;
-      const date = document.getElementById('bookingDate').value;
-      const session = document.getElementById('bookingSession').value;
-      const bType = document.getElementById('bookingType').value;
+      const name = document.getElementById('parentName') ? document.getElementById('parentName').value.trim() : '';
+      const phone = document.getElementById('parentPhone') ? document.getElementById('parentPhone').value.trim() : '';
+      const email = document.getElementById('parentEmail') ? document.getElementById('parentEmail').value.trim() : '';
+      const date = document.getElementById('bookingDate') ? document.getElementById('bookingDate').value : '';
+      const session = document.getElementById('bookingSession') ? document.getElementById('bookingSession').value : '';
+      const bType = document.getElementById('bookingType') ? document.getElementById('bookingType').value : 'session';
       const kids = childCountVal ? childCountVal.textContent : '1';
       const adults = adultCountVal ? adultCountVal.textContent : '0';
-      const message = document.getElementById('specialRequests') ? document.getElementById('specialRequests').value : '';
-      const totalCost = estTotalEl ? estTotalEl.textContent : 'KES 1,000';
+      const message = document.getElementById('specialRequests') ? document.getElementById('specialRequests').value.trim() : '';
+      const totalCost = estTotalEl ? estTotalEl.textContent.trim() : 'KES 1,000';
+
+      // Friendly Booking Type Label
+      let typeLabel = 'Standard Session Pass';
+      if (bType === 'birthday') typeLabel = 'Birthday Party Package';
+      else if (bType === 'school') typeLabel = 'School / Kindergarten Group Trip';
+      else if (bType === 'private') typeLabel = 'Exclusive Private Venue Hire';
 
       // Confetti Blast
       if (typeof confetti !== 'undefined') {
@@ -807,31 +815,68 @@ document.addEventListener('DOMContentLoaded', () => {
         modalSummary.innerHTML = `
           <p><strong>Parent / Guardian:</strong> ${name}</p>
           <p><strong>Phone / WhatsApp:</strong> ${phone}</p>
-          <p><strong>Booking Type:</strong> ${bType.toUpperCase()}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Booking Type:</strong> ${typeLabel}</p>
           <p><strong>Visit Date:</strong> ${date} (${session})</p>
           <p><strong>Guests:</strong> ${kids} Child(ren), ${adults} Adult(s)</p>
           <p><strong>Estimated Total:</strong> ${totalCost}</p>
-          ${message ? `<p><strong>Special Request:</strong> ${message}</p>` : ''}
+          ${message ? `<p><strong>Special Request / Notes:</strong> ${message}</p>` : ''}
         `;
       }
 
-      // Format WhatsApp prefilled message
-      const waText = encodeURIComponent(
-        `🎈 *NEW PLAY-ON MOMBASA BOOKING REQUEST*\n\n` +
-        `👤 *Name:* ${name}\n` +
-        `📞 *Phone:* ${phone}\n` +
-        `✉️ *Email:* ${email}\n` +
-        `🎪 *Type:* ${bType.toUpperCase()}\n` +
-        `📅 *Date:* ${date}\n` +
-        `🕒 *Session:* ${session}\n` +
-        `👶 *Kids:* ${kids} | 👨 *Adults:* ${adults}\n` +
-        `💰 *Estimated Total:* ${totalCost}\n` +
-        (message ? `📝 *Notes:* ${message}\n\n` : `\n`) +
-        `Please confirm our reservation at Mombasa Mall 2nd Floor. Thank you!`
-      );
+      // 1. Format WhatsApp prefilled message
+      const waMessage = 
+`🎈 *NEW PLAY-ON MOMBASA BOOKING REQUEST*
+
+👤 *Parent / Guardian:* ${name}
+📞 *Phone / WhatsApp:* ${phone}
+✉️ *Email:* ${email}
+🎪 *Booking Type:* ${typeLabel}
+📅 *Visit Date:* ${date}
+🕒 *Session Time:* ${session}
+👶 *Children:* ${kids} | 👨 *Adults:* ${adults}
+💰 *Estimated Total:* ${totalCost}
+${message ? `📝 *Special Notes / Requests:* ${message}\n` : ''}
+Please confirm our reservation at Mombasa Mall 2nd Floor. Thank you!`;
 
       if (modalWhatsappBtn) {
-        modalWhatsappBtn.href = `https://wa.me/254780611074?text=${waText}`;
+        modalWhatsappBtn.href = `https://wa.me/254780611074?text=${encodeURIComponent(waMessage)}`;
+      }
+
+      // 2. Format Email Subject & Body for Gmail & Default Mail Clients
+      const emailSubject = `Play-On Booking Reservation - ${name} (${date})`;
+      const emailBody = 
+`Dear Play-On Mombasa Team,
+
+I would like to confirm my booking reservation for Play-On Kids Indoor Playground at Mombasa Mall (2nd Floor).
+
+BOOKING DETAILS:
+----------------------------------------
+• Parent / Guardian Name: ${name}
+• Phone / WhatsApp Number: ${phone}
+• Email Address: ${email}
+• Booking Type: ${typeLabel}
+• Preferred Visit Date: ${date}
+• Selected Session: ${session}
+• Number of Children (1-15 yrs): ${kids}
+• Accompanying Adults: ${adults}
+• Estimated Total: ${totalCost}
+${message ? `• Special Requests / Notes: ${message}\n` : ''}----------------------------------------
+
+Please confirm availability and booking confirmation for our visit.
+
+Thank you!
+${name}
+${phone}`;
+
+      // Gmail Web Compose Link
+      if (modalGmailBtn) {
+        modalGmailBtn.href = `https://mail.google.com/mail/?view=cm&fs=1&to=playonkenya@gmail.com&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+      }
+
+      // Default Email Client (Mailto) Link
+      if (modalEmailBtn) {
+        modalEmailBtn.href = `mailto:playonkenya@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
       }
 
       // Show confirmation modal
