@@ -665,6 +665,9 @@ nav.desktop-nav a.active {
 }
 
 @media (max-width: 992px) {
+  .nav-container {
+    justify-content: flex-end;
+  }
   nav.desktop-nav {
     display: none;
   }
