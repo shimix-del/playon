@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const targetEl = document.querySelector(targetId);
     if (targetEl) {
-      const headerOffset = 68;
+      const headerOffset = 88;
       const elementPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = Math.max(0, elementPosition - headerOffset);
 
