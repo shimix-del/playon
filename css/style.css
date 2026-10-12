@@ -191,14 +191,6 @@ h1, h2, h3, h4, h5, h6 {
   100% { transform: translateY(-50%) rotate(6deg); }
 }
 
-/* --------------------------------------------------------------------------
-   4. Custom Playful Cursor (Disabled for 0ms Native Hardware Cursor Speed)
-   -------------------------------------------------------------------------- */
-.custom-cursor,
-.custom-cursor-follower {
-  display: none !important;
-  pointer-events: none;
-}
 
 /* --------------------------------------------------------------------------
    5. Bouncy 3D Pill Buttons
@@ -436,10 +428,6 @@ header.scrolled {
 
 .logo:active .logo-img {
   transform: scale(0.96);
-}
-
-.logo-badge {
-  display: none !important;
 }
 
 /* Desktop Navigation Menu */
@@ -998,7 +986,6 @@ nav.desktop-nav a.active {
 .wave-fill-green-deep { fill: var(--brand-green-deep); }
 .wave-fill-teal-soft { fill: var(--brand-teal-light); }
 .wave-fill-yellow-soft { fill: var(--brand-yellow-soft); }
-.wave-fill-dark { fill: #0B1E15; }
 
 /* --------------------------------------------------------------------------
    12. FEATURES SECTION ("Why Kids & Parents Love Us")
@@ -2722,10 +2709,6 @@ footer {
     display: none; /* Already in mobile bottom dock */
   }
 
-  /* Hide distracting floating balloons on mobile phones for clean clarity */
-  .floating-decor {
-    display: none !important;
-  }
 
   /* Hero Section */
   .hero {
@@ -3324,8 +3307,5 @@ footer {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-  .custom-cursor, .custom-cursor-follower {
-    display: none !important;
   }
 }
