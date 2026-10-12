@@ -1022,4 +1022,28 @@ ${phone}`;
       }
     });
   }
+
+  /* ------------------------------------------------------------------------
+     15. Autonomous Video Playback Observer
+     ------------------------------------------------------------------------ */
+  const videoCards = document.querySelectorAll('.video-card video');
+  if (videoCards.length) {
+    videoCards.forEach((video) => {
+      video.muted = true;
+      video.play().catch(() => {});
+    });
+
+    if ('IntersectionObserver' in window) {
+      const videoPlayObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          }
+        });
+      }, { threshold: 0.2 });
+
+      videoCards.forEach((video) => videoPlayObserver.observe(video));
+    }
+  }
 });
