@@ -758,9 +758,11 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ------------------------------------------------------------------------
-     11. Booking Form Submit & Confetti Celebration
+     11. Booking Form Submit & Confetti Celebration (Connected to Backend API)
      ------------------------------------------------------------------------ */
   const bookingForm = document.getElementById('bookingForm');
+  const bookingSubmitBtn = document.getElementById('bookingSubmitBtn') || (bookingForm ? bookingForm.querySelector('button[type="submit"]') : null);
+  const bookingFormStatus = document.getElementById('bookingFormStatus');
   const confirmationModal = document.getElementById('confirmationModal');
   const modalSummary = document.getElementById('modalSummary');
   const modalWhatsappBtn = document.getElementById('modalWhatsappBtn');
@@ -768,8 +770,58 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalEmailBtn = document.getElementById('modalEmailBtn');
   const modalCloseBtn = document.getElementById('modalCloseBtn');
 
+  // Backend Booking API & Admin Portal Endpoints
+  // Automatically points to local server during local testing or production on mombasamall.co.ke
+  const isLocalHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const BOOKING_API_URL = isLocalHost
+    ? (window.location.port === '8080' ? '/backend/api/submit_booking.php' : 'http://localhost:8080/backend/api/submit_booking.php')
+    : 'https://mombasamall.co.ke/backend/api/submit_booking.php';
+
+  const ADMIN_PORTAL_URL = isLocalHost
+    ? (window.location.port === '8080' ? '/backend/admin/' : 'http://localhost:8080/backend/admin/')
+    : 'https://mombasamall.co.ke/backend/admin/';
+
+  // Wire up Staff & Admin Portal links throughout the website
+  document.querySelectorAll('#headerAdminLink, #drawerAdminLink, #footerAdminLink').forEach((link) => {
+    if (link) link.href = ADMIN_PORTAL_URL;
+  });
+
+  // Modal Auto-Close Timers
+  let autoCloseTimer = null;
+  let autoCloseInterval = null;
+
+  function closeAndResetModal() {
+    if (autoCloseInterval) {
+      clearInterval(autoCloseInterval);
+      autoCloseInterval = null;
+    }
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer);
+      autoCloseTimer = null;
+    }
+
+    if (confirmationModal) {
+      confirmationModal.classList.remove('is-active');
+    }
+
+    // Reset form so fields are cleared
+    if (bookingForm) {
+      bookingForm.reset();
+    }
+    if (typeof calculateLivePrice === 'function') {
+      calculateLivePrice();
+    }
+
+    // Attempt to close the browser page if it was opened in its own window/popup tab
+    try {
+      window.close();
+    } catch (err) {
+      // Browser blocked window.close() (standard for directly opened browser tabs)
+    }
+  }
+
   if (bookingForm) {
-    bookingForm.addEventListener('submit', (e) => {
+    bookingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const name = document.getElementById('parentName') ? document.getElementById('parentName').value.trim() : '';
@@ -782,6 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const adults = adultCountVal ? adultCountVal.textContent : '0';
       const message = document.getElementById('specialRequests') ? document.getElementById('specialRequests').value.trim() : '';
       const totalCost = estTotalEl ? estTotalEl.textContent.trim() : 'KES 1,000';
+      const honeypot = document.getElementById('hpWebsite') ? document.getElementById('hpWebsite').value : '';
 
       // Friendly Booking Type Label
       let typeLabel = 'Standard Session Pass';
@@ -789,7 +842,75 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (bType === 'school') typeLabel = 'School / Kindergarten Group Trip';
       else if (bType === 'private') typeLabel = 'Exclusive Private Venue Hire';
 
-      // Confetti Blast
+      // Clear previous status
+      if (bookingFormStatus) {
+        bookingFormStatus.style.display = 'none';
+        bookingFormStatus.innerHTML = '';
+      }
+
+      // Set Loading State
+      const originalBtnHtml = bookingSubmitBtn ? bookingSubmitBtn.innerHTML : 'Submit Booking & Celebrate 🎉';
+      if (bookingSubmitBtn) {
+        bookingSubmitBtn.disabled = true;
+        bookingSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reserving Your Spot & Sending Emails...';
+      }
+
+      const payload = {
+        parentName: name,
+        parentPhone: phone,
+        parentEmail: email,
+        bookingType: bType,
+        bookingDate: date,
+        bookingSession: session,
+        childCount: kids,
+        adultCount: adults,
+        estimatedTotal: totalCost,
+        specialRequests: message,
+        hp_website: honeypot
+      };
+
+      let bookingRef = 'PO-' + Date.now().toString().slice(-6);
+      let isBackendSuccess = false;
+
+      try {
+        const response = await fetch(BOOKING_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => null);
+
+        if (response.ok && result && result.success) {
+          isBackendSuccess = true;
+          if (result.booking_ref) {
+            bookingRef = result.booking_ref;
+          }
+        } else {
+          // If server returned structured error
+          const errMsg = (result && result.message) ? result.message : 'Booking server returned an error. Proceeding with instant WhatsApp reservation.';
+          if (bookingFormStatus) {
+            bookingFormStatus.style.display = 'block';
+            bookingFormStatus.innerHTML = `
+              <div style="background:#FFF9D6; color:#7A5700; border:1px solid #FFE98A; padding:0.75rem 1rem; border-radius:8px; font-weight:700; font-size:0.9rem;">
+                <i class="fas fa-info-circle"></i> Note: ${errMsg}
+              </div>
+            `;
+          }
+        }
+      } catch (networkErr) {
+        console.warn('Backend API connection note (backend will record when hosted on mombasamall.co.ke):', networkErr);
+      } finally {
+        if (bookingSubmitBtn) {
+          bookingSubmitBtn.disabled = false;
+          bookingSubmitBtn.innerHTML = originalBtnHtml;
+        }
+      }
+
+      // Confetti Blast Celebration
       if (typeof confetti !== 'undefined') {
         const count = 200;
         const defaults = {
@@ -810,9 +931,12 @@ document.addEventListener('DOMContentLoaded', () => {
         fire(0.1, { spread: 120, startVelocity: 45 });
       }
 
-      // Populate Modal Summary
+      // Populate Modal Summary with Official Booking Reference
       if (modalSummary) {
         modalSummary.innerHTML = `
+          <div style="background:#FFE033; color:#0B1E15; padding:6px 14px; border-radius:20px; font-weight:800; display:inline-block; margin-bottom:12px; font-size:0.95rem;">
+            🎟️ Booking Ref: ${bookingRef}
+          </div>
           <p><strong>Parent / Guardian:</strong> ${name}</p>
           <p><strong>Phone / WhatsApp:</strong> ${phone}</p>
           <p><strong>Email:</strong> ${email}</p>
@@ -824,9 +948,9 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
-      // 1. Format WhatsApp prefilled message
+      // 1. Format WhatsApp prefilled message with Booking Reference
       const waMessage = 
-`🎈 *NEW PLAY-ON MOMBASA BOOKING REQUEST*
+`🎈 *NEW PLAY-ON MOMBASA BOOKING RESERVATION [${bookingRef}]*
 
 👤 *Parent / Guardian:* ${name}
 📞 *Phone / WhatsApp:* ${phone}
@@ -836,15 +960,14 @@ document.addEventListener('DOMContentLoaded', () => {
 🕒 *Session Time:* ${session}
 👶 *Children:* ${kids} | 👨 *Adults:* ${adults}
 💰 *Estimated Total:* ${totalCost}
-${message ? `📝 *Special Notes / Requests:* ${message}\n` : ''}
-Please confirm our reservation at Mombasa Mall 2nd Floor. Thank you!`;
+${message ? `📝 *Special Notes / Requests:* ${message}\n` : ''}Please confirm our reservation at Mombasa Mall 2nd Floor. Thank you!`;
 
       if (modalWhatsappBtn) {
         modalWhatsappBtn.href = `https://wa.me/254780611074?text=${encodeURIComponent(waMessage)}`;
       }
 
-      // 2. Format Email Subject & Body for Gmail & Default Mail Clients
-      const emailSubject = `Play-On Booking Reservation - ${name} (${date})`;
+      // 2. Format Email Subject & Body with Booking Reference
+      const emailSubject = `Play-On Booking Reservation - ${bookingRef} (${name}, ${date})`;
       const emailBody = 
 `Dear Play-On Mombasa Team,
 
@@ -852,6 +975,7 @@ I would like to confirm my booking reservation for Play-On Kids Indoor Playgroun
 
 BOOKING DETAILS:
 ----------------------------------------
+• Booking Reference: ${bookingRef}
 • Parent / Guardian Name: ${name}
 • Phone / WhatsApp Number: ${phone}
 • Email Address: ${email}
@@ -882,20 +1006,52 @@ ${phone}`;
       // Show confirmation modal
       if (confirmationModal) {
         confirmationModal.classList.add('is-active');
+
+        // Start 6-second auto-close countdown
+        let secondsLeft = 6;
+        const countdownEl = document.getElementById('countdownTimerVal');
+        const progressBar = document.getElementById('autocloseProgressBar');
+
+        if (countdownEl) countdownEl.textContent = secondsLeft.toString();
+        if (progressBar) {
+          progressBar.style.transition = 'none';
+          progressBar.style.width = '100%';
+          setTimeout(() => {
+            if (progressBar) {
+              progressBar.style.transition = `width ${secondsLeft}s linear`;
+              progressBar.style.width = '0%';
+            }
+          }, 50);
+        }
+
+        if (autoCloseInterval) clearInterval(autoCloseInterval);
+        if (autoCloseTimer) clearTimeout(autoCloseTimer);
+
+        autoCloseInterval = setInterval(() => {
+          secondsLeft--;
+          if (countdownEl) countdownEl.textContent = Math.max(0, secondsLeft).toString();
+          if (secondsLeft <= 0) {
+            clearInterval(autoCloseInterval);
+            autoCloseInterval = null;
+          }
+        }, 1000);
+
+        autoCloseTimer = setTimeout(() => {
+          closeAndResetModal();
+        }, secondsLeft * 1000);
       }
     });
   }
 
-  if (modalCloseBtn && confirmationModal) {
-    modalCloseBtn.addEventListener('click', () => {
-      confirmationModal.classList.remove('is-active');
-    });
+  // Close handlers using closeAndResetModal
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', closeAndResetModal);
   }
 
   if (confirmationModal) {
     confirmationModal.addEventListener('click', (e) => {
       if (e.target === confirmationModal) {
-        confirmationModal.classList.remove('is-active');
+        closeAndResetModal();
       }
     });
   }

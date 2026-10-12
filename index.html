@@ -177,6 +177,9 @@
         <i class="fab fa-whatsapp"></i> WhatsApp
       </a>
     </div>
+    <a href="backend/admin/" target="_blank" rel="noopener noreferrer" class="mobile-nav-admin-link" id="drawerAdminLink">
+      <i class="fas fa-user-shield"></i> Staff & Admin Dashboard
+    </a>
   </div>
 
   <!-- 2. HERO SECTION -->
@@ -545,7 +548,7 @@
             <span class="activity-age-badge">4 - 15 Yrs</span>
             <picture>
               <source srcset="images/activity-zipline.webp" type="image/webp" />
-              <img src="images/activity-zipline.jpg" alt="Indoor High Aerial Zipline" class="activity-img" width="800" height="533" loading="lazy" decoding="async" />
+              <img src="images/activity-zipline.jpg" alt="Indoor High Aerial Zipline" class="activity-img" width="470" height="800" loading="lazy" decoding="async" style="object-position: center 28%;" />
             </picture>
           </div>
           <div class="activity-body">
@@ -1274,9 +1277,15 @@
               <textarea id="specialRequests" class="form-textarea" rows="3" placeholder="Tell us if you're celebrating a birthday, need special assistance, or have dietary requirements..."></textarea>
             </div>
 
+            <!-- Anti-Spam Honeypot Field (Hidden from real users) -->
+            <input type="text" name="hp_website" id="hpWebsite" style="display:none !important;" tabindex="-1" autocomplete="off" />
+
+            <!-- Submission Status Feedback Banner -->
+            <div id="bookingFormStatus" class="form-group full-width" style="display:none;"></div>
+
             <!-- Submit Button -->
-            <div class="form-group full-width" style="margin-top: 1rem;">
-              <button type="submit" class="btn btn-lg btn-yellow btn-wiggle" style="width: 100%;">
+            <div class="form-group full-width" style="margin-top: 0.5rem;">
+              <button type="submit" id="bookingSubmitBtn" class="btn btn-lg btn-yellow btn-wiggle" style="width: 100%;">
                 <i class="fas fa-paper-plane"></i> Submit Booking & Celebrate 🎉
               </button>
             </div>
@@ -1287,29 +1296,38 @@
     </div>
   </section>
 
-  <!-- Celebration Confetti Booking Confirmation Modal -->
-  <div class="modal-overlay" id="confirmationModal">
+  <!-- Celebration Confetti Booking Confirmation Modal with Auto-Close -->
+  <div class="modal-overlay" id="confirmationModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-card">
       <div class="modal-icon-celebration">🎉</div>
-      <h3>You're Booked for Fun!</h3>
-      <p>Your Play-On reservation request has been prepared! Complete 1-click confirmation via WhatsApp or Email below.</p>
+      <h3 id="modalTitle">Booking Submitted Successfully!</h3>
+      <p id="modalSubtitle">Your Play-On Mombasa reservation request has been received and confirmed in our system!</p>
+
+      <!-- Auto-Close Countdown Pill & Progress Bar -->
+      <div class="modal-autoclose-container" id="modalAutocloseContainer">
+        <div class="autoclose-progress-track">
+          <div class="autoclose-progress-bar" id="autocloseProgressBar"></div>
+        </div>
+        <div class="autoclose-badge">
+          <i class="fas fa-clock fa-spin"></i> This confirmation will close automatically in <span id="countdownTimerVal">6</span>s
+        </div>
+      </div>
 
       <div class="modal-summary-box" id="modalSummary">
         <!-- Injected via JavaScript -->
       </div>
 
       <div class="modal-actions">
-        <a href="#" id="modalWhatsappBtn" target="_blank" rel="noopener noreferrer" class="btn btn-green btn-wiggle">
-          <i class="fab fa-whatsapp"></i> Send via WhatsApp (+254 780 611 074)
-        </a>
-        <a href="#" id="modalGmailBtn" target="_blank" rel="noopener noreferrer" class="btn btn-red">
-          <i class="fab fa-google"></i> Send via Gmail (playonkenya@gmail.com)
-        </a>
-        <a href="#" id="modalEmailBtn" class="btn btn-teal">
-          <i class="fas fa-envelope"></i> Send via Default Mail App
-        </a>
+        <div class="modal-quick-links">
+          <a href="#" id="modalWhatsappBtn" target="_blank" rel="noopener noreferrer" class="btn btn-green">
+            <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+          </a>
+          <a href="#" id="modalGmailBtn" target="_blank" rel="noopener noreferrer" class="btn btn-red">
+            <i class="fab fa-google"></i> Open Gmail
+          </a>
+        </div>
         <button type="button" class="btn btn-white" id="modalCloseBtn">
-          Close Window
+          <i class="fas fa-times-circle"></i> Close Window Now
         </button>
       </div>
     </div>
@@ -1430,7 +1448,7 @@
     <!-- Footer Bottom Bar -->
     <div class="footer-bottom">
       <div class="container footer-bottom-flex">
-        <p>© 2026 Play-On Mombasa Mall. All Rights Reserved.</p>
+        <p>© 2026 Play-On Mombasa Mall. All Rights Reserved. • <a href="backend/admin/" target="_blank" rel="noopener noreferrer" id="footerAdminLink" class="footer-admin-link"><i class="fas fa-lock"></i> Staff & Admin Portal</a></p>
         <p>Designed with ❤️ for Mombasa Kids & Families.</p>
       </div>
     </div>

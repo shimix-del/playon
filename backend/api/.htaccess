@@ -1,0 +1,5 @@
+# Allow CORS Preflight and Options
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, X-Requested-With, Accept"
+</IfModule>
