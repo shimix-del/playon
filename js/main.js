@@ -782,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
     : 'https://mombasamall.co.ke/backend/admin/';
 
   // Wire up Staff & Admin Portal links throughout the website
-  document.querySelectorAll('#headerAdminLink, #drawerAdminLink, #footerAdminLink').forEach((link) => {
+  document.querySelectorAll('#headerAdminLink, #drawerAdminLink, #footerAdminLink, #footerColAdminLink').forEach((link) => {
     if (link) link.href = ADMIN_PORTAL_URL;
   });
 
